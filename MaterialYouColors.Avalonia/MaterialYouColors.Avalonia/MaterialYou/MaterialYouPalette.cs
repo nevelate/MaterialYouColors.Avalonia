@@ -13,6 +13,8 @@ namespace MaterialYouColors.Avalonia.MaterialYou
     public class MaterialYouPalette : ResourceProvider
     {
         private bool invalidateColors = true;
+        private bool appThemeChanged = false;
+
         private static readonly Color defaultSystemAccentColor = Color.FromRgb(0, 120, 215);
         private Color systemAccentColor;
         private Scheme<string> colors = null!;
@@ -280,7 +282,7 @@ namespace MaterialYouColors.Avalonia.MaterialYou
                     EnsureColors(theme);
                     value = Color.Parse(colors.SurfaceContainerHighest);
                     return true;
-                }
+                }                
             }
             value = null;
             return false;
@@ -293,7 +295,16 @@ namespace MaterialYouColors.Avalonia.MaterialYou
                 platformSettings.ColorValuesChanged += PlatformSettingsOnColorValuesChanged;
             }
 
+            App.Current.ActualThemeVariantChanged += ActualThemeVariantChanged;
+
             invalidateColors = true;
+        }
+
+        private void ActualThemeVariantChanged(object? sender, EventArgs e)
+        {
+            invalidateColors = true;
+            appThemeChanged = true;
+            Owner?.NotifyHostedResourcesChanged(ResourcesChangedEventArgs.Empty);
         }
 
         protected override void OnRemoveOwner(IResourceHost owner)
@@ -303,10 +314,12 @@ namespace MaterialYouColors.Avalonia.MaterialYou
                 platformSettings.ColorValuesChanged -= PlatformSettingsOnColorValuesChanged;
             }
 
+            App.Current.ActualThemeVariantChanged -= ActualThemeVariantChanged;
+
             invalidateColors = true;
         }
 
-        private void EnsureColors(ThemeVariant theme)
+        private void EnsureColors(ThemeVariant? theme)
         {
             if (invalidateColors)
             {
@@ -318,7 +331,13 @@ namespace MaterialYouColors.Avalonia.MaterialYou
 
                 uint seedColor = systemAccentColor.ToUInt32();
                 CorePalette corePalette = CorePalette.Of(seedColor);
-                Scheme<uint> scheme = null!;                
+                Scheme<uint> scheme = null!;
+
+                if (appThemeChanged)
+                {
+                    appThemeChanged = false;
+                    theme = App.Current.ActualThemeVariant;
+                }
 
                 if (theme == ThemeVariant.Light) scheme = new LightSchemeMapper().Map(corePalette);
                 else if (theme == ThemeVariant.Dark) scheme = new DarkSchemeMapper().Map(corePalette);
@@ -342,6 +361,5 @@ namespace MaterialYouColors.Avalonia.MaterialYou
             invalidateColors = true;
             Owner?.NotifyHostedResourcesChanged(ResourcesChangedEventArgs.Empty);
         }
-
     }
 }

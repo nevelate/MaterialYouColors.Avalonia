@@ -13,6 +13,11 @@
   </Design.DataContext>
   <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
               Spacing="10">
+    <ToggleSwitch Margin="20"
+                  HorizontalAlignment="Center"
+                  OnContent="Dark"
+                  OffContent="Light"
+                  IsChecked="{Binding IsDarkTheme}"/>
     <Border Width="200" Height="200"
                Background="{DynamicResource PrimaryColor}"/>
     <Border Width="200" Height="200"
